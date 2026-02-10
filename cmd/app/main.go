@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"usersservice/internal/storage/postgres"
 	"usersservice/pkg/config"
 	"usersservice/pkg/logger"
 
@@ -23,7 +24,11 @@ func main() {
 
 	log.Info("application trying to setting up", zap.Any("env", cfg.Env))
 
-	// storage init
+	storage, close, err := postgres.New(log, cfg.Postgres.DSN())
+	if err != nil {
+		log.Fatal("failed to setup storage", zap.Error(err))
+	}
+	_ = storage
 
 	// application init
 
@@ -33,5 +38,6 @@ func main() {
 	signal.Notify(done, syscall.SIGTERM, syscall.SIGINT)
 	<-done
 
+	close()
 	// close connections
 }
