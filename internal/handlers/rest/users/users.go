@@ -1,4 +1,4 @@
-package rest
+package users
 
 import (
 	"encoding/json"
@@ -49,7 +49,6 @@ func (h *Handler) GetUserById(w http.ResponseWriter, r *http.Request) {
 	const op = "handlers.rest.users.GetUserById"
 	log := h.log.With(zap.String("op", op))
 
-	// Extract the user ID from the request (assuming it's passed as a URL parameter)
 	userIds := r.URL.Query().Get("id")
 	if userIds == "" {
 		http.Error(w, "missing user ID", http.StatusBadRequest)
@@ -114,21 +113,25 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	const op = "handlers.rest.users.ChangePassword"
 	log := h.log.With(zap.String("op", op))
 
-	// Extract the user ID and new password from the request (assuming they are passed as JSON)
+	userIds := r.URL.Query().Get("id")
+	if userIds == "" {
+		http.Error(w, "missing user ID", http.StatusBadRequest)
+		return
+	}
+
+	userId, err := uuid.Parse(userIds)
+	if err != nil {
+		log.Error("invalid user ID format", zap.String("userId", userIds), zap.Error(err))
+		http.Error(w, "invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
 	request := struct {
-		UserID      string `json:"userId"`
 		NewPassword string `json:"newPassword"`
 	}{}
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		log.Error("failed to decode request body", zap.Error(err))
 		http.Error(w, "invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	userId, err := uuid.Parse(request.UserID)
-	if err != nil {
-		log.Error("invalid user ID format", zap.String("userId", request.UserID), zap.Error(err))
-		http.Error(w, "invalid user ID format", http.StatusBadRequest)
 		return
 	}
 
@@ -155,7 +158,6 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	const op = "handlers.rest.users.Update"
 	log := h.log.With(zap.String("op", op))
 
-	// Extract the user ID from the request (assuming it's passed as a URL parameter)
 	userIds := r.URL.Query().Get("id")
 	if userIds == "" {
 		http.Error(w, "missing user ID", http.StatusBadRequest)
@@ -201,7 +203,6 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	const op = "handlers.rest.users.Delete"
 	log := h.log.With(zap.String("op", op))
 
-	// Extract the user ID from the request (assuming it's passed as a URL parameter)
 	userIds := r.URL.Query().Get("id")
 	if userIds == "" {
 		http.Error(w, "missing user ID", http.StatusBadRequest)
