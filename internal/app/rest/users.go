@@ -1,4 +1,4 @@
-package rest
+package restapp
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"usersservice/internal/handlers/rest/users"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 )
 
@@ -36,6 +37,7 @@ func (a *App) Start() error {
 	base := mux.NewRouter()
 	base.Use(restmiddleware.CORS)
 	base.Use(restmiddleware.RequestLoggerMiddleware(log))
+	base.Handle("/metrics", promhttp.Handler())
 
 	router := base.PathPrefix("/api/v1").Subrouter()
 

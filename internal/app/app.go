@@ -1,12 +1,13 @@
-package service
+package app
 
 import (
 	"context"
-	"errors"
-
+	restapp "usersservice/internal/app/rest"
 	"usersservice/internal/models/domain"
+	"usersservice/internal/service/users"
 
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 type Storage interface {
@@ -18,8 +19,16 @@ type Storage interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-var (
-	ErrNotFound        = errors.New("not found")
-	ErrAlreadyExists   = errors.New("already exists")
-	ErrInvalidArgument = errors.New("invalid argument")
-)
+type App struct {
+	RESTServer *restapp.App
+}
+
+func New(log *zap.Logger, storage Storage, port int) *App {
+	service := users.New(log, storage)
+
+	restServer := restapp.New(log, service, port)
+
+	return &App{
+		RESTServer: restServer,
+	}
+}

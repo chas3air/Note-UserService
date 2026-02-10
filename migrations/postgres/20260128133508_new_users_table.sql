@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS users
     password VARCHAR(255) NOT NULL
 );
 
-CREATE INDEX idx_users_user_id ON users(user_id);
+-- CREATE INDEX idx_users_email ON users(email);
+
 -- +goose StatementEnd
 
 -- +goose Down

@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"usersservice/internal/app"
 	"usersservice/internal/storage/postgres"
 	"usersservice/pkg/config"
 	"usersservice/pkg/logger"
@@ -30,14 +31,18 @@ func main() {
 	}
 	_ = storage
 
-	// application init
-
-	// start servers
+	application := app.New(log, storage, cfg.Rest.Port)
+	go func() {
+		if err := application.RESTServer.Start(); err != nil {
+			log.Fatal("failed to start REST server", zap.Error(err))
+		}
+	}()
+	// TODO: add gRPC server
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, syscall.SIGTERM, syscall.SIGINT)
 	<-done
 
 	close()
-	// close connections
+	application.RESTServer.Shutdown()
 }
