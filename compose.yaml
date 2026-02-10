@@ -1,0 +1,50 @@
+services:
+  user-service:
+    build: .
+    container_name: user-service
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+      # - "50051:50051" # gRPC port
+    networks:
+      - userservice_net
+    depends_on:
+      users_psql:
+        condition: service_started
+
+  users_psql:
+    image: postgres:16
+    container_name: usersstorage
+    ports:
+      - "5432:5432"
+    networks:
+      - userservice_net
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: users_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    volumes:
+    - userservice_psql_volume:/var/lib/postgresql/data
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9095:9090"
+    volumes:
+      - ./prometheus/config.yaml:/etc/prometheus/prometheus.yml
+    networks:
+      - userservice_net
+    restart: unless-stopped
+
+networks:
+  userservice_net:
+
+volumes:
+  userservice_psql_volume:
